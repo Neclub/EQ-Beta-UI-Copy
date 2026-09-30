@@ -123,7 +123,6 @@ class RenameEndpointTests(unittest.TestCase):
         for text in (
             "Browse Live folder",
             "Download zip",
-            "Close EverQuest",
             "readme.txt",
             "Only character INI files are kept",
         ):
@@ -135,6 +134,8 @@ class RenameEndpointTests(unittest.TestCase):
             "webkitdirectory",
             "Measure zip sizes",
             "measure-bandwidth",
+            "If the zip has a userdata folder",
+            "uifiles yourself",
         ):
             self.assertNotIn(removed, page)
         script = self.client.get("/static/app.js")

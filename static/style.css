@@ -533,18 +533,6 @@ p {
   font-weight: 700;
 }
 
-.steps > li.step-warning {
-  color: #f6d7a8;
-}
-
-.step-path {
-  display: block;
-  margin-top: 2px;
-  color: var(--text);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .action-bar {
   display: flex;
   align-items: center;

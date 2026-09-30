@@ -10,7 +10,7 @@ Selected INI files are uploaded for that one request, renamed in memory, and dis
 
 1. Close EverQuest and EverQuest Beta.
 2. Open the site in Chrome or Edge. If it has been idle, the first load can take about a minute while the free server wakes up.
-3. Choose **Browse Live folder** and select your EverQuest folder. Only character INI files are read. Maps, sounds, and the rest of the game folder stay on your PC.
+3. Choose **Browse Live folder**. On your own computer that opens a folder window. On the website, open your EverQuest folder, paste the search shown on the page into the search box, press Ctrl+A, then Open. Only character INI files are kept. Maps, sounds, and the rest of the game folder stay on your PC.
 4. Check the servers you want to see. More than one server can be shown at once. Then check the characters you want. Each checked character includes its UI, hotkey, and persona INI files. Hidden characters stay checked.
 5. Choose **Download zip**. `eq-beta-files.zip` saves to your Downloads folder.
 6. Open the zip and follow `readme.txt`. Copy the renamed INI files into the EverQuest Beta folder, and copy the `userdata` folder into `EverQuest Beta\userdata`. Replace files that are already there.

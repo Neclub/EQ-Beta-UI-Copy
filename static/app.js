@@ -100,8 +100,7 @@ function visibleGroups() {
 function refreshActions() {
   const visible = visibleGroups();
   const anySelected = groups.some((group) => group.checked);
-  const canPick = useLocalFolder || "webkitdirectory" in document.createElement("input");
-  pickLiveButton.disabled = busy || !canPick;
+  pickLiveButton.disabled = busy;
   zipButton.disabled = busy || !liveFolderName || !anySelected;
   selectAll.disabled = busy || visible.length === 0;
   syncServerChecks();
@@ -216,21 +215,9 @@ function characterFilesFromList(fileList) {
   const found = [];
   for (const file of fileList) {
     const parts = (file.webkitRelativePath || file.name).split(/[/\\]/).filter(Boolean);
-    let kind = "";
-    let filename = "";
-    if (parts.length === 2 && parts[1].toLowerCase().endsWith(".ini")) {
-      kind = "root";
-      filename = parts[1];
-    } else if (
-      parts.length === 3
-      && parts[1].toLowerCase() === "userdata"
-      && parts[2].toLowerCase().endsWith(".ini")
-    ) {
-      kind = "userdata";
-      filename = parts[2];
-    } else {
-      continue;
-    }
+    const filename = parts[parts.length - 1] || "";
+    if (!filename.toLowerCase().endsWith(".ini")) continue;
+    const kind = parts.some((part) => part.toLowerCase() === "userdata") ? "userdata" : "root";
     rememberCharacterFile(found, kind, filename, { file });
   }
   return found;
@@ -441,8 +428,7 @@ function openHostedFolderPicker() {
   const input = document.createElement("input");
   input.type = "file";
   input.multiple = true;
-  input.setAttribute("webkitdirectory", "");
-  input.setAttribute("directory", "");
+  input.accept = ".ini";
   input.addEventListener("change", () => {
     const files = [...input.files];
     if (!files.length) return;
@@ -459,7 +445,7 @@ pickLiveButton.addEventListener("click", () => {
     withBusy(() => pickOnThisComputer());
     return;
   }
-  setStatus("Select the Live EverQuest folder. The window may say Upload. Only character INI files are kept.");
+  setStatus("Open your EverQuest folder, paste the search, press Ctrl+A, then Open.");
   openHostedFolderPicker();
 });
 
@@ -524,7 +510,28 @@ async function loadMode() {
     if (privacy) {
       privacy.textContent = "Checked character INI files are uploaded so the server can rename them, then discarded. They are not saved. The first visit after the site has been idle can take about a minute while it wakes up.";
     }
-    if (!("webkitdirectory" in document.createElement("input"))) support.hidden = false;
+    const searchHelp = document.querySelector("#hosted-search");
+    if (searchHelp) searchHelp.hidden = false;
+    const copySearch = document.querySelector("#copy-search");
+    const iniSearch = document.querySelector("#ini-search");
+    if (copySearch && iniSearch) {
+      copySearch.addEventListener("click", async () => {
+        const text = iniSearch.textContent;
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (_error) {
+          const range = document.createRange();
+          range.selectNodeContents(iniSearch);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+        copySearch.textContent = "Copied";
+        setTimeout(() => {
+          copySearch.textContent = "Copy";
+        }, 1500);
+      });
+    }
   }
   refreshActions();
 }

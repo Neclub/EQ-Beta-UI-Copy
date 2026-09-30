@@ -141,9 +141,11 @@ class RenameEndpointTests(unittest.TestCase):
         try:
             self.assertEqual(script.status_code, 200)
             script_text = script.get_data(as_text=True)
+            self.assertIn("*bristle*.ini", page)
             self.assertIn("parseCharacterIni", script_text)
             self.assertIn("/pick-folder", script_text)
             self.assertIn("webkitRelativePath", script_text)
+            self.assertNotIn("webkitdirectory", script_text)
             self.assertNotIn("measure-bandwidth", script_text)
         finally:
             script.close()

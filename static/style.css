@@ -458,6 +458,30 @@ p {
   border: 1px solid rgba(230, 160, 80, 0.25);
 }
 
+.search-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0.45rem 0;
+}
+
+.search-line code {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--recessed);
+  border: 1px solid var(--input-border);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.search-line .btn {
+  flex-shrink: 0;
+}
+
 .example,
 .note {
   color: #d7dbea;

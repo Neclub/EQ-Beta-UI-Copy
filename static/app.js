@@ -100,7 +100,7 @@ function visibleGroups() {
 function refreshActions() {
   const visible = visibleGroups();
   const anySelected = groups.some((group) => group.checked);
-  const canPick = useLocalFolder || typeof showDirectoryPicker === "function";
+  const canPick = useLocalFolder || "webkitdirectory" in document.createElement("input");
   pickLiveButton.disabled = busy || !canPick;
   zipButton.disabled = busy || !liveFolderName || !anySelected;
   selectAll.disabled = busy || visible.length === 0;
@@ -198,24 +198,48 @@ function renderCharacters() {
   refreshActions();
 }
 
-async function listCharacterFiles(dirHandle) {
+function rememberCharacterFile(found, kind, filename, source) {
+  const parsed = parseCharacterIni(filename);
+  if (!parsed || parsed.server.toLowerCase() === "beta") return;
+  found.push({
+    kind,
+    name: filename,
+    betaFilename: parsed.betaFilename,
+    character: parsed.name,
+    server: parsed.server,
+    cls: parsed.cls,
+    ...source,
+  });
+}
+
+function characterFilesFromList(fileList) {
   const found = [];
-  let userdata = null;
-  for await (const entry of dirHandle.values()) {
-    if (entry.kind === "file" && entry.name.toLowerCase().endsWith(".ini")) {
-      addCharacterFile(found, "root", entry);
-    } else if (entry.kind === "directory" && entry.name.toLowerCase() === "userdata") {
-      userdata = entry;
+  for (const file of fileList) {
+    const parts = (file.webkitRelativePath || file.name).split(/[/\\]/).filter(Boolean);
+    let kind = "";
+    let filename = "";
+    if (parts.length === 2 && parts[1].toLowerCase().endsWith(".ini")) {
+      kind = "root";
+      filename = parts[1];
+    } else if (
+      parts.length === 3
+      && parts[1].toLowerCase() === "userdata"
+      && parts[2].toLowerCase().endsWith(".ini")
+    ) {
+      kind = "userdata";
+      filename = parts[2];
+    } else {
+      continue;
     }
-  }
-  if (userdata) {
-    for await (const entry of userdata.values()) {
-      if (entry.kind === "file" && entry.name.toLowerCase().endsWith(".ini")) {
-        addCharacterFile(found, "userdata", entry);
-      }
-    }
+    rememberCharacterFile(found, kind, filename, { file });
   }
   return found;
+}
+
+function folderNameFromList(fileList) {
+  const path = fileList[0] && fileList[0].webkitRelativePath;
+  if (!path) return "EverQuest";
+  return path.split(/[/\\]/).filter(Boolean)[0] || "EverQuest";
 }
 
 function fillServerFilter() {
@@ -280,20 +304,6 @@ function syncServerChecks() {
   }
 }
 
-function addCharacterFile(found, kind, handle) {
-  const parsed = parseCharacterIni(handle.name);
-  if (!parsed || parsed.server.toLowerCase() === "beta") return;
-  found.push({
-    kind,
-    name: handle.name,
-    handle,
-    betaFilename: parsed.betaFilename,
-    character: parsed.name,
-    server: parsed.server,
-    cls: parsed.cls,
-  });
-}
-
 function groupCharacters(files) {
   const map = new Map();
   for (const file of files) {
@@ -330,7 +340,7 @@ async function buildForm() {
   for (const group of groups) {
     if (!group.checked) continue;
     for (const item of group.files) {
-      const file = await item.handle.getFile();
+      const file = item.file || await item.handle.getFile();
       const folder = item.kind === "userdata" ? "userdata" : "root";
       form.append("files", file, file.name);
       form.append("paths", `${folder}/${item.name}`);
@@ -427,23 +437,30 @@ async function pickOnThisComputer() {
   applyFoundFiles(body.folder || body.name, body.files || []);
 }
 
-pickLiveButton.addEventListener("click", () => {
-  withBusy(async () => {
-    if (useLocalFolder) {
-      await pickOnThisComputer();
-      return;
-    }
-    let handle;
-    try {
-      handle = await showDirectoryPicker({ id: "eq-live", mode: "read" });
-    } catch (error) {
-      if (error && error.name === "AbortError") return;
-      throw error;
-    }
-    setStatus("Reading character INI names…");
-    const found = await listCharacterFiles(handle);
-    applyFoundFiles(handle.name, found);
+function openHostedFolderPicker() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.multiple = true;
+  input.setAttribute("webkitdirectory", "");
+  input.setAttribute("directory", "");
+  input.addEventListener("change", () => {
+    const files = [...input.files];
+    if (!files.length) return;
+    withBusy(async () => {
+      setStatus("Reading character INI names…");
+      applyFoundFiles(folderNameFromList(files), characterFilesFromList(files));
+    });
   });
+  input.click();
+}
+
+pickLiveButton.addEventListener("click", () => {
+  if (useLocalFolder) {
+    withBusy(() => pickOnThisComputer());
+    return;
+  }
+  setStatus("Select the Live EverQuest folder. The window may say Upload. Only character INI files are kept.");
+  openHostedFolderPicker();
 });
 
 selectAll.addEventListener("change", () => {
@@ -507,7 +524,7 @@ async function loadMode() {
     if (privacy) {
       privacy.textContent = "Checked character INI files are uploaded so the server can rename them, then discarded. They are not saved. The first visit after the site has been idle can take about a minute while it wakes up.";
     }
-    if (typeof showDirectoryPicker !== "function") support.hidden = false;
+    if (!("webkitdirectory" in document.createElement("input"))) support.hidden = false;
   }
   refreshActions();
 }

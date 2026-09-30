@@ -125,7 +125,7 @@ class RenameEndpointTests(unittest.TestCase):
             "Download zip",
             "Close EverQuest",
             "readme.txt",
-            "Only character INI files are read",
+            "Only character INI files are kept",
         ):
             self.assertIn(text, page)
         for removed in (
@@ -143,6 +143,7 @@ class RenameEndpointTests(unittest.TestCase):
             script_text = script.get_data(as_text=True)
             self.assertIn("parseCharacterIni", script_text)
             self.assertIn("/pick-folder", script_text)
+            self.assertIn("webkitRelativePath", script_text)
             self.assertNotIn("measure-bandwidth", script_text)
         finally:
             script.close()

@@ -93,6 +93,10 @@ p {
 .panel-header.options { color: var(--accent-slots); }
 .panel-header.output { color: var(--accent-output); }
 
+.panel-header.has-tip {
+  cursor: help;
+}
+
 .panel-body { padding: 12px 14px; }
 
 .workspace {
@@ -296,6 +300,17 @@ p {
 
 .file-balloon li + li {
   margin-top: 4px;
+}
+
+.file-balloon p {
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.file-balloon p + p {
+  margin-top: 6px;
 }
 
 .empty-state {

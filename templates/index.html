@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EQ Beta UI Copy</title>
-  <link rel="stylesheet" href="/static/style.css?v=20">
+  <link rel="stylesheet" href="/static/style.css?v=21">
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true" id="class-icon-sprite">
@@ -99,14 +99,16 @@
       </section>
 
       <section class="panel panel-copy">
-        <div class="panel-header output">Copy</div>
+        <div class="panel-header output has-tip" id="copy-title">Copy</div>
+        <div id="copy-tip" hidden>
+          <p>UI_Bob_Vox_WAR.ini becomes UI_Bob_beta_WAR.ini. Persona and audio-trigger files for a checked character are included.</p>
+          <p>Only character INI files are kept. Maps, sounds, and the rest of the game folder stay on your PC.</p>
+        </div>
         <div class="panel-body">
           <p class="warning">Close EverQuest before you paste the files into the Beta folder.</p>
-          <p class="example">UI_Bob_Vox_WAR.ini becomes UI_Bob_beta_WAR.ini. Persona and audio-trigger files for a checked character are included.</p>
           <p id="support" class="warning" hidden>
             Open this page in Chrome or Edge. Folder browsing is not available in this browser.
           </p>
-          <p class="note">Only character INI files are kept. Maps, sounds, and the rest of the game folder stay on your PC.</p>
           <div id="hosted-search" hidden>
             <p class="note">Open your EverQuest folder. Paste this into the search box, press Ctrl+A, then Open.</p>
             <p class="search-line">
@@ -141,6 +143,6 @@
   </div>
 </div>
 <script src="/static/class_visuals.js?v=10"></script>
-  <script src="/static/app.js?v=14"></script>
+  <script src="/static/app.js?v=15"></script>
 </body>
 </html>

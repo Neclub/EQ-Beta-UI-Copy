@@ -114,16 +114,7 @@ function hideFileBalloon() {
   fileBalloon.replaceChildren();
 }
 
-function showFileBalloon(anchor, files) {
-  const list = document.createElement("ul");
-  for (const file of files) {
-    const item = document.createElement("li");
-    const folder = file.kind === "userdata" ? "userdata/" : "";
-    item.textContent = `${folder}${file.name} → ${folder}${file.betaFilename}`;
-    list.append(item);
-  }
-  fileBalloon.replaceChildren(list);
-  fileBalloon.hidden = false;
+function placeBalloon(anchor) {
   const rect = anchor.getBoundingClientRect();
   const margin = 8;
   let left = rect.left;
@@ -136,6 +127,28 @@ function showFileBalloon(anchor, files) {
   fileBalloon.style.left = `${left}px`;
   fileBalloon.style.top = `${top}px`;
 }
+
+function showFileBalloon(anchor, files) {
+  const list = document.createElement("ul");
+  for (const file of files) {
+    const item = document.createElement("li");
+    const folder = file.kind === "userdata" ? "userdata/" : "";
+    item.textContent = `${folder}${file.name} → ${folder}${file.betaFilename}`;
+    list.append(item);
+  }
+  fileBalloon.replaceChildren(list);
+  fileBalloon.hidden = false;
+  placeBalloon(anchor);
+}
+
+const copyTitle = document.querySelector("#copy-title");
+const copyTip = document.querySelector("#copy-tip");
+copyTitle.addEventListener("mouseenter", () => {
+  fileBalloon.replaceChildren(...[...copyTip.children].map((node) => node.cloneNode(true)));
+  fileBalloon.hidden = false;
+  placeBalloon(copyTitle);
+});
+copyTitle.addEventListener("mouseleave", hideFileBalloon);
 
 function renderCharacters() {
   const visible = liveFolderName ? visibleGroups() : [];

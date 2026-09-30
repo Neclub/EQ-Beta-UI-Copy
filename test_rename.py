@@ -141,7 +141,10 @@ class RenameEndpointTests(unittest.TestCase):
         try:
             self.assertEqual(script.status_code, 200)
             script_text = script.get_data(as_text=True)
-            self.assertIn("*bristle*.ini", page)
+            self.assertIn("*antonius*.ini", page)
+            self.assertIn("*xegony*.ini", page)
+            self.assertNotIn("*steel*.ini", page)
+            self.assertNotIn("*tking*.ini", page)
             self.assertIn("parseCharacterIni", script_text)
             self.assertIn("/pick-folder", script_text)
             self.assertIn("webkitRelativePath", script_text)

@@ -125,6 +125,7 @@ class RenameEndpointTests(unittest.TestCase):
             "Download zip",
             "readme.txt",
             "Only character INI files are kept",
+            "Leave the others unchecked",
         ):
             self.assertIn(text, page)
         for removed in (

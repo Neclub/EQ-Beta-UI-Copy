@@ -504,6 +504,47 @@ p {
   line-height: 1.5;
 }
 
+.steps {
+  margin: 0 0 0.7rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  color: #d7dbea;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.steps > li {
+  position: relative;
+  margin: 0 0 0.55rem;
+  padding-left: 1.35rem;
+  counter-increment: step;
+}
+
+.steps > li[hidden] {
+  display: none;
+}
+
+.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  color: var(--accent-output);
+  font-weight: 700;
+}
+
+.steps > li.step-warning {
+  color: #f6d7a8;
+}
+
+.step-path {
+  display: block;
+  margin-top: 2px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .action-bar {
   display: flex;
   align-items: center;

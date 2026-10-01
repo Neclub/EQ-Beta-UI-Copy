@@ -551,5 +551,27 @@ async function loadMode() {
 
 window.EQCopy = { parseCharacterIni };
 
+const helpButton = document.querySelector("#help-button");
+const helpMenu = document.querySelector("#help-menu");
+
+function setHelpOpen(open) {
+  helpMenu.hidden = !open;
+  helpButton.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+helpButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  setHelpOpen(helpMenu.hidden);
+});
+
+document.addEventListener("click", (event) => {
+  if (helpMenu.hidden || event.target.closest("#help")) return;
+  setHelpOpen(false);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setHelpOpen(false);
+});
+
 loadMode();
 refreshActions();

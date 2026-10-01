@@ -126,6 +126,7 @@ class RenameEndpointTests(unittest.TestCase):
             "readme.txt",
             "Only character INI files are kept",
             "Leave the others unchecked",
+            "https://shakahr.com/everquest-beta/",
         ):
             self.assertIn(text, page)
         for removed in (

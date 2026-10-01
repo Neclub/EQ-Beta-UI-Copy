@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EQ Beta UI Copy</title>
-  <link rel="stylesheet" href="/static/style.css?v=24">
+  <link rel="stylesheet" href="/static/style.css?v=26">
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true" id="class-icon-sprite">
@@ -65,6 +65,13 @@
 <div id="app">
   <header class="app-header">
     <h1>EQ Beta UI Copy</h1>
+    <div class="help" id="help">
+      <button type="button" class="btn" id="help-button" aria-expanded="false" aria-controls="help-menu">Help</button>
+      <div class="help-menu" id="help-menu" hidden>
+        <p>This page renames your Live character files so the server name is beta, then downloads a zip.</p>
+        <a href="https://shakahr.com/everquest-beta/" target="_blank" rel="noopener noreferrer">How to rename the files yourself</a>
+      </div>
+    </div>
   </header>
 
   <div class="workspace">
@@ -145,6 +152,6 @@
   </div>
 </div>
 <script src="/static/class_visuals.js?v=10"></script>
-  <script src="/static/app.js?v=15"></script>
+  <script src="/static/app.js?v=16"></script>
 </body>
 </html>

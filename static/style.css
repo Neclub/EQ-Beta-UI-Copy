@@ -47,19 +47,20 @@ body {
 }
 
 #app {
-  width: 100%;
-  min-height: 100%;
-  padding: 16px 28px 20px;
+  width: min(100% - 32px, calc(340px + 24rem + 12px));
+  margin: 16px auto 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 h1 {
+  grid-column: 2;
   margin: 0;
   font-size: 20px;
   font-weight: 600;
   color: var(--title);
+  text-align: center;
 }
 
 p {
@@ -68,19 +69,21 @@ p {
 
 .app-header {
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 16px;
 }
 
 .help {
   position: relative;
+  grid-column: 3;
+  justify-self: end;
 }
 
 .help-menu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0;
   z-index: 30;
   width: 18rem;
   padding: 10px 12px;
@@ -367,27 +370,6 @@ p {
   display: none;
 }
 
-.side-art {
-  flex: 1 1 220px;
-  align-self: flex-start;
-  margin: 0;
-  min-width: 180px;
-  min-height: 0;
-  border-radius: 8px;
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--frame-shadow);
-  overflow: hidden;
-}
-
-.side-art img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: calc(100vh - 90px);
-  object-fit: contain;
-  object-position: center top;
-}
-
 .toolbar-folder {
   margin-top: 8px;
   flex-shrink: 0;
@@ -668,11 +650,5 @@ p {
   .roster-shell {
     flex: 0 1 auto;
     max-height: 22rem;
-  }
-
-  .side-art {
-    flex: none;
-    width: 100%;
-    height: min(70vh, 640px);
   }
 }

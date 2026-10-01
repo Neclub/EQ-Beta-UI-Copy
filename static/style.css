@@ -602,9 +602,25 @@ p {
 }
 
 .status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   color: var(--muted);
   font-size: 12px;
   min-height: 1.2em;
+}
+
+.error-chip {
+  display: inline-block;
+  max-width: 36rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(180, 140, 255, 0.7);
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(110, 70, 220, 0.5), rgba(70, 40, 140, 0.6));
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 #log {

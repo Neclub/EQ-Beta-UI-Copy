@@ -152,6 +152,7 @@ class RenameEndpointTests(unittest.TestCase):
             self.assertIn("*xegony*.ini", page)
             self.assertNotIn("*steel*.ini", page)
             self.assertNotIn("*tking*.ini", page)
+            self.assertIn("This character is listed on more than one server.", script_text)
             self.assertIn("parseCharacterIni", script_text)
             self.assertIn("/pick-folder", script_text)
             self.assertIn("webkitRelativePath", script_text)

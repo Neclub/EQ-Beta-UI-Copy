@@ -75,7 +75,13 @@ function isToken(value) {
 }
 
 function setStatus(message) {
-  statusLine.textContent = message;
+  statusLine.replaceChildren(document.createTextNode(message));
+  if (message.startsWith("More than one file would be named")) {
+    const chip = document.createElement("span");
+    chip.className = "error-chip";
+    chip.textContent = "This character is listed on more than one server. Uncheck the old one you no longer need.";
+    statusLine.append(chip);
+  }
 }
 
 function log(message) {

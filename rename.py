@@ -49,6 +49,11 @@ class CharacterIni:
         return f"{self.prefix}{self.name}_beta{cls}{extra}.ini"
 
 
+def is_eqclient_ini(filename: str) -> bool:
+    """True only for the Live client settings file, not a named copy."""
+    return filename.casefold() == "eqclient.ini"
+
+
 def parse_character_ini(filename: str) -> CharacterIni | None:
     """Return the name, server, and class pieces of a character INI, or None."""
     if not filename.lower().endswith(".ini"):
@@ -105,6 +110,8 @@ def output_relpath(upload_path: str) -> str | None:
 
     kind = parts[0].lower()
     rest = parts[1:]
+    if kind == "root" and len(rest) == 1 and is_eqclient_ini(rest[0]):
+        return "eqclient.ini"
     if kind == "root":
         return _ini_output(rest, folder="")
     if kind == "userdata":

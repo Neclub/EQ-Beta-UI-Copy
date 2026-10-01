@@ -107,7 +107,10 @@ class OutputPathTests(unittest.TestCase):
     def test_unsafe_paths_are_rejected(self) -> None:
         self.assertIsNone(output_relpath("uifiles/../../secret.txt"))
         self.assertIsNone(output_relpath("root/../UI_Bob_Vox_WAR.ini"))
-        self.assertIsNone(output_relpath("root/eqclient.ini"))
+        self.assertEqual(output_relpath("root/eqclient.ini"), "eqclient.ini")
+        self.assertEqual(output_relpath("root/EQClient.ini"), "eqclient.ini")
+        self.assertIsNone(output_relpath("root/eqclient-Neclub (bristle).ini"))
+        self.assertIsNone(output_relpath("userdata/eqclient.ini"))
         self.assertIsNone(output_relpath("/root/UI_Bob_Vox_WAR.ini"))
         self.assertIsNone(output_relpath("maps/Bob_Vox_WAR.ini"))
 
@@ -124,9 +127,10 @@ class RenameEndpointTests(unittest.TestCase):
             "Browse Live folder",
             "Download zip",
             "readme.txt",
-            "Only character INI files are kept",
+            "Only character INI files and eqclient.ini are kept",
             "Leave the others unchecked",
             "https://shakahr.com/everquest-beta/",
+            "OR eqclient.ini",
         ):
             self.assertIn(text, page)
         for removed in (
@@ -214,8 +218,22 @@ class RenameEndpointTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Rejected", response.get_json()["error"])
 
-    def test_non_character_ini_is_rejected(self) -> None:
-        response = self._post([("root/eqclient.ini", b"[Client]")])
+    def test_eqclient_is_copied_unchanged(self) -> None:
+        client_bytes = b"[Client]\r\nWindow=1\r\n"
+        response = self._post(
+            [
+                ("root/UI_Bob_Vox_WAR.ini", b"[UI]"),
+                ("root/eqclient.ini", client_bytes),
+                ("root/EQClient.ini", b"[Second]"),
+            ]
+        )
+        self.assertEqual(response.status_code, 200)
+        archive = zipfile.ZipFile(io.BytesIO(response.data))
+        self.assertEqual(archive.read("eqclient.ini"), client_bytes)
+        self.assertEqual(archive.namelist().count("eqclient.ini"), 1)
+
+    def test_named_eqclient_copy_is_rejected(self) -> None:
+        response = self._post([("root/eqclient-Neclub (bristle).ini", b"[Client]")])
         self.assertEqual(response.status_code, 400)
 
     def test_empty_request_is_rejected(self) -> None:
@@ -245,6 +263,7 @@ class LocalFolderTests(unittest.TestCase):
             root = Path(temporary)
             (root / "UI_Bob_Vox_WAR.ini").write_bytes(b"[UI]")
             (root / "eqclient.ini").write_bytes(b"[Client]")
+            (root / "eqclient-Neclub (bristle).ini").write_bytes(b"[Named]")
             (root / "120chevy_characters.ini").write_bytes(b"[Chars]")
             (root / "maps").mkdir()
             (root / "maps" / "UI_Bob_Vox_WAR.ini").write_bytes(b"map")
@@ -263,6 +282,7 @@ class LocalFolderTests(unittest.TestCase):
             ],
         )
         self.assertEqual(listed["files"][0]["betaFilename"], "UI_Bob_beta_WAR.ini")
+        self.assertEqual(listed["eqclient"], "root/eqclient.ini")
 
     def test_local_zip_reads_only_the_selected_character_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -279,7 +299,26 @@ class LocalFolderTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         archive = zipfile.ZipFile(io.BytesIO(response.data))
         self.assertEqual(archive.read("UI_Bob_beta_WAR.ini"), ui_bytes)
-        self.assertNotIn(b"[Client]", response.data)
+        self.assertNotIn("eqclient.ini", archive.namelist())
+
+    def test_local_zip_includes_one_eqclient_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            client_bytes = b"[Client]\r\nWindow=1\r\n"
+            (root / "UI_Bob_Vox_WAR.ini").write_bytes(b"[UI]")
+            (root / "eqclient.ini").write_bytes(client_bytes)
+            (root / "userdata").mkdir()
+            (root / "userdata" / "eqclient.ini").write_bytes(b"[Userdata client]")
+            listed = webapp.remember_live_folder(root)
+            response = self.client.post(
+                "/rename-local",
+                json={"paths": ["root/UI_Bob_Vox_WAR.ini", listed["eqclient"]]},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        archive = zipfile.ZipFile(io.BytesIO(response.data))
+        self.assertEqual(archive.read("eqclient.ini"), client_bytes)
+        self.assertEqual(archive.namelist().count("eqclient.ini"), 1)
 
     def test_local_zip_rejects_a_file_that_was_not_listed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

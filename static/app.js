@@ -22,6 +22,8 @@ const logBox = document.querySelector("#log");
 
 let liveFolderName = "";
 let groups = [];
+let eqclientSource = "";
+let eqclientFile = null;
 let busy = false;
 let useLocalFolder = location.hostname === "127.0.0.1" || location.hostname === "localhost";
 
@@ -210,6 +212,10 @@ function renderCharacters() {
   refreshActions();
 }
 
+function isEqclientIni(filename) {
+  return filename.toLowerCase() === "eqclient.ini";
+}
+
 function rememberCharacterFile(found, kind, filename, source) {
   const parsed = parseCharacterIni(filename);
   if (!parsed || parsed.server.toLowerCase() === "beta") return;
@@ -226,14 +232,20 @@ function rememberCharacterFile(found, kind, filename, source) {
 
 function characterFilesFromList(fileList) {
   const found = [];
+  let eqclient = null;
   for (const file of fileList) {
     const parts = (file.webkitRelativePath || file.name).split(/[/\\]/).filter(Boolean);
     const filename = parts[parts.length - 1] || "";
     if (!filename.toLowerCase().endsWith(".ini")) continue;
-    const kind = parts.some((part) => part.toLowerCase() === "userdata") ? "userdata" : "root";
+    const inUserdata = parts.some((part) => part.toLowerCase() === "userdata");
+    if (!inUserdata && isEqclientIni(filename)) {
+      if (!eqclient) eqclient = { source: `root/${filename}`, file };
+      continue;
+    }
+    const kind = inUserdata ? "userdata" : "root";
     rememberCharacterFile(found, kind, filename, { file });
   }
-  return found;
+  return { found, eqclient };
 }
 
 function folderNameFromList(fileList) {
@@ -347,6 +359,11 @@ async function buildForm() {
       count += 1;
     }
   }
+  if (eqclientFile && eqclientSource) {
+    form.append("files", eqclientFile, eqclientFile.name);
+    form.append("paths", eqclientSource);
+    count += 1;
+  }
   if (count === 0) throw new Error("Select at least one character.");
   return { form, count };
 }
@@ -404,12 +421,20 @@ async function withBusy(work, clear) {
 
 function showFoundStatus() {
   const countLabel = groups.length === 1 ? "character" : "characters";
-  setStatus(groups.length ? `Found ${groups.length} ${countLabel}.` : "No character INI files found.");
+  const clientNote = eqclientSource ? " eqclient.ini is included." : "";
+  setStatus(groups.length ? `Found ${groups.length} ${countLabel}.${clientNote}` : "No character INI files found.");
 }
 
-function applyFoundFiles(folderLabel, found) {
+function applyFoundFiles(folderLabel, found, client) {
   liveFolderName = folderLabel;
   liveName.textContent = `Selected: ${folderLabel}`;
+  if (client && typeof client === "object") {
+    eqclientSource = client.source || "";
+    eqclientFile = client.file || null;
+  } else {
+    eqclientSource = client || "";
+    eqclientFile = null;
+  }
   groups = groupCharacters(found);
   fillServerFilter();
   renderCharacters();
@@ -434,7 +459,7 @@ async function pickOnThisComputer() {
     setStatus("Folder selection was cancelled.");
     return;
   }
-  applyFoundFiles(body.folder || body.name, body.files || []);
+  applyFoundFiles(body.folder || body.name, body.files || [], body.eqclient || "");
 }
 
 function openHostedFolderPicker() {
@@ -445,9 +470,10 @@ function openHostedFolderPicker() {
   input.addEventListener("change", () => {
     const files = [...input.files];
     if (!files.length) return;
+    const picked = characterFilesFromList(files);
     withBusy(async () => {
       setStatus("Reading character INI names…");
-      applyFoundFiles(folderNameFromList(files), characterFilesFromList(files));
+      applyFoundFiles(folderNameFromList(files), picked.found, picked.eqclient);
     });
   });
   input.click();
@@ -473,6 +499,7 @@ function selectedSources() {
     if (!group.checked) continue;
     for (const item of group.files) paths.push(item.source);
   }
+  if (eqclientSource) paths.push(eqclientSource);
   return paths;
 }
 
@@ -521,7 +548,7 @@ async function loadMode() {
   if (!useLocalFolder) {
     const privacy = document.querySelector("#privacy");
     if (privacy) {
-      privacy.textContent = "Checked character INI files are uploaded so the server can rename them, then discarded. They are not saved. The first visit after the site has been idle can take about a minute while it wakes up.";
+      privacy.textContent = "Checked character INI files are uploaded so the server can rename them, then discarded. eqclient.ini is included when you select it. They are not saved. The first visit after the site has been idle can take about a minute while it wakes up.";
     }
     const searchHelp = document.querySelector("#hosted-search");
     if (searchHelp) searchHelp.hidden = false;

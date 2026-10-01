@@ -16,7 +16,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request, send_file
 
-from rename import output_relpath, parse_character_ini
+from rename import is_eqclient_ini, output_relpath, parse_character_ini
 
 MAX_BYTES = 20 * 1024 * 1024
 MAX_FILES = 5000
@@ -32,6 +32,10 @@ Close EverQuest before you replace any files.
 
    The usual folder is:
    C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\EverQuest Beta
+
+   eqclient.ini in this zip keeps that name. Copy it into the same Beta
+   folder and replace the file that is already there. Other eqclient files
+   are not included.
 
 2. If this zip has a userdata folder, copy it into:
    EverQuest Beta\\userdata
@@ -165,21 +169,25 @@ def _build_zip(paths: list[str], uploads) -> bytes:
         raise UploadError(f"Too many files. The limit is {MAX_FILES}.")
 
     rels: list[str] = []
+    kept: list = []
     seen: set[str] = set()
-    for path in paths:
+    for path, upload in zip(paths, uploads):
         rel = output_relpath(path)
         if rel is None:
             raise UploadError(f"Rejected {_brief(path)}.")
         folded = rel.casefold()
         if folded in seen:
+            if folded == "eqclient.ini":
+                continue
             raise UploadError(f"More than one file would be named {rel}.")
         seen.add(folded)
         rels.append(rel)
+        kept.append(upload)
 
     buffer = io.BytesIO()
     total = 0
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for rel, upload in zip(rels, uploads):
+        for rel, upload in zip(rels, kept):
             data = upload.read()
             total += len(data)
             if total > MAX_BYTES:
@@ -200,19 +208,24 @@ def remember_live_folder(folder: Path) -> dict:
     if not root.is_dir():
         raise UploadError("That folder was not found.")
 
-    listed = _scan_character_files(root)
+    listed, client_name = _scan_character_files(root)
     sources: dict[str, Path] = {}
     for item in listed:
         path = root / item["name"] if item["kind"] == "root" else root / "userdata" / item["name"]
         sources[item["source"]] = path
+    eqclient = None
+    if client_name:
+        eqclient = f"root/{client_name}"
+        sources[eqclient] = root / client_name
     _live_root = root
     _live_sources = sources
     app.logger.info("Listed %s character INI files in %s", len(listed), root.name)
-    return {"folder": str(root), "name": root.name, "files": listed}
+    return {"folder": str(root), "name": root.name, "files": listed, "eqclient": eqclient}
 
 
-def _scan_character_files(root: Path) -> list[dict]:
+def _scan_character_files(root: Path) -> tuple[list[dict], str | None]:
     found = _scan_one_directory(root, "root")
+    client_name = _eqclient_name(root)
     userdata = root / "userdata"
     if userdata.is_dir():
         found.extend(_scan_one_directory(userdata, "userdata"))
@@ -224,7 +237,18 @@ def _scan_character_files(root: Path) -> list[dict]:
             item["name"].casefold(),
         )
     )
-    return found
+    return found, client_name
+
+
+def _eqclient_name(folder: Path) -> str | None:
+    try:
+        children = list(folder.iterdir())
+    except OSError as exc:
+        raise UploadError(f"Could not read {folder.name}.") from exc
+    for path in children:
+        if path.is_file() and is_eqclient_ini(path.name):
+            return path.name
+    return None
 
 
 def _scan_one_directory(folder: Path, kind: str) -> list[dict]:
@@ -253,6 +277,10 @@ def _scan_one_directory(folder: Path, kind: str) -> list[dict]:
     return found
 
 
+def _allowed_live_file(filename: str) -> bool:
+    return parse_character_ini(filename) is not None or is_eqclient_ini(filename)
+
+
 def _read_local_selection(requested: list[str]) -> tuple[list[str], list[_BytesUpload]]:
     if _live_root is None or not _live_sources:
         raise UploadError("Choose the Live folder first.")
@@ -269,7 +297,7 @@ def _read_local_selection(requested: list[str]) -> tuple[list[str], list[_BytesU
             file_path.relative_to(_live_root)
         except (OSError, ValueError) as exc:
             raise UploadError(f"Rejected {_brief(source)}.") from exc
-        if not file_path.is_file() or parse_character_ini(file_path.name) is None:
+        if not file_path.is_file() or not _allowed_live_file(file_path.name):
             raise UploadError(f"Rejected {_brief(source)}.")
         paths.append(source)
         uploads.append(_BytesUpload(file_path.read_bytes()))

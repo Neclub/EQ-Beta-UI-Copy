@@ -149,6 +149,86 @@ function showFileBalloon(anchor, files) {
   placeBalloon(anchor);
 }
 
+function showPersonaBalloon(anchor) {
+  const classes = (anchor.dataset.hiddenClasses || "").split(" ").filter(Boolean);
+  if (!classes.length) return;
+  const list = document.createElement("div");
+  list.className = "persona-balloon";
+  for (const cls of classes) {
+    const badge = ClassVisuals.createBadge(cls);
+    if (badge) list.append(badge);
+  }
+  fileBalloon.replaceChildren(list);
+  fileBalloon.hidden = false;
+  placeBalloon(anchor);
+}
+
+function fitPersonaRow(top) {
+  const personas = top.querySelector(".char-personas");
+  if (!personas) return;
+  const badges = [...personas.querySelectorAll(".class-badge")];
+  const more = personas.querySelector(".persona-more");
+  if (!badges.length || !more) return;
+
+  for (const badge of badges) badge.hidden = false;
+  more.hidden = true;
+
+  const gap = parseFloat(getComputedStyle(personas).columnGap) || 0;
+  const available = personas.clientWidth;
+  const widths = badges.map((badge) => badge.getBoundingClientRect().width);
+  const total = widths.reduce((sum, width, index) => sum + width + (index ? gap : 0), 0);
+  if (total <= available + 0.5) {
+    more.hidden = true;
+    more.dataset.hiddenClasses = "";
+    return;
+  }
+
+  function countThatFits(tokenWidth) {
+    let used = 0;
+    let count = 0;
+    for (let index = 0; index < widths.length; index += 1) {
+      const hiddenAfter = widths.length - (index + 1);
+      const extra = hiddenAfter > 0 ? gap + tokenWidth : 0;
+      const next = widths[index] + (count > 0 ? gap : 0);
+      if (used + next + extra > available + 0.5) break;
+      used += next;
+      count += 1;
+    }
+    return count;
+  }
+
+  more.hidden = false;
+  let fitCount = 0;
+  let tokenWidth = 0;
+  for (let pass = 0; pass < 3; pass += 1) {
+    const hidden = badges.length - fitCount;
+    more.textContent = `+${hidden || badges.length}`;
+    tokenWidth = more.getBoundingClientRect().width;
+    const nextCount = countThatFits(tokenWidth);
+    if (pass > 0 && nextCount === fitCount) break;
+    fitCount = nextCount;
+  }
+
+  const hiddenCount = badges.length - fitCount;
+  badges.forEach((badge, index) => {
+    badge.hidden = index >= fitCount;
+  });
+  if (hiddenCount === 0 || (fitCount === 0 && tokenWidth > available + 0.5)) {
+    more.hidden = true;
+    more.dataset.hiddenClasses = "";
+    return;
+  }
+  more.hidden = false;
+  more.textContent = `+${hiddenCount}`;
+  more.dataset.hiddenClasses = badges.slice(fitCount).map((badge) => badge.textContent).join(" ");
+}
+
+function fitAllPersonas() {
+  for (const top of characters.querySelectorAll(".char-row-top")) fitPersonaRow(top);
+}
+
+new ResizeObserver(() => fitAllPersonas()).observe(document.querySelector(".roster-shell"));
+
 const copyTitle = document.querySelector("#copy-title");
 const copyTip = document.querySelector("#copy-tip");
 copyTitle.addEventListener("mouseenter", () => {
@@ -202,9 +282,20 @@ function renderCharacters() {
     name.addEventListener("mouseenter", () => showFileBalloon(name, group.files));
     name.addEventListener("mouseleave", hideFileBalloon);
     top.append(name);
+    const personas = document.createElement("span");
+    personas.className = "char-personas";
     for (const cls of group.classes) {
       const badge = ClassVisuals.createBadge(cls);
-      if (badge) top.append(badge);
+      if (badge) personas.append(badge);
+    }
+    if (personas.childElementCount) {
+      const more = document.createElement("span");
+      more.className = "persona-more";
+      more.hidden = true;
+      more.addEventListener("mouseenter", () => showPersonaBalloon(more));
+      more.addEventListener("mouseleave", hideFileBalloon);
+      personas.append(more);
+      top.append(personas);
     }
     const serverEl = document.createElement("div");
     serverEl.className = "char-server";
@@ -216,6 +307,7 @@ function renderCharacters() {
     characters.append(row);
   }
   refreshActions();
+  requestAnimationFrame(() => fitAllPersonas());
 }
 
 function isEqclientIni(filename) {

@@ -276,9 +276,13 @@ p {
   align-items: center;
   gap: 6px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .char-name {
+  flex: 0 0 auto;
+  max-width: 100%;
+  min-width: 0;
   font-weight: 600;
   font-size: 13px;
   overflow: hidden;
@@ -292,6 +296,15 @@ p {
   text-underline-offset: 2px;
 }
 
+.char-personas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 0 1 auto;
+}
+
 .class-badge {
   font-size: 9px;
   font-weight: 700;
@@ -303,6 +316,27 @@ p {
   border: 1px solid color-mix(in srgb, var(--class-color, var(--muted)) 35%, transparent);
   line-height: 1.3;
   flex-shrink: 0;
+}
+
+.persona-more {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--muted);
+  background: var(--input);
+  border: 1px solid var(--input-border);
+  line-height: 1.3;
+  flex-shrink: 0;
+  cursor: help;
+  white-space: nowrap;
+}
+
+.file-balloon .persona-balloon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .char-server {

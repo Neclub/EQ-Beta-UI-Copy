@@ -88,12 +88,12 @@ def pick_folder():
         response.headers["Cache-Control"] = "no-store"
         return response, 404
     try:
-        chosen = _choose_directory()
-        if chosen is None:
+        chosen = _choose_ini_files()
+        if not chosen:
             response = jsonify(cancelled=True)
             response.headers["Cache-Control"] = "no-store"
             return response
-        payload = remember_live_folder(Path(chosen))
+        payload = remember_selected_files([Path(item) for item in chosen])
     except UploadError as exc:
         response = jsonify(error=str(exc))
         response.headers["Cache-Control"] = "no-store"
@@ -304,7 +304,76 @@ def _read_local_selection(requested: list[str]) -> tuple[list[str], list[_BytesU
     return paths, uploads
 
 
-def _choose_directory() -> str | None:
+def remember_selected_files(paths: list[Path]) -> dict:
+    """Keep the selected character INI files and one eqclient.ini for the zip."""
+    global _live_root, _live_sources
+    resolved: list[Path] = []
+    for path in paths:
+        try:
+            file_path = path.expanduser().resolve(strict=True)
+        except OSError:
+            continue
+        if file_path.is_file():
+            resolved.append(file_path)
+    if not resolved:
+        raise UploadError("No character INI files found.")
+
+    roots: list[Path] = []
+    for file_path in resolved:
+        parent = file_path.parent
+        roots.append(parent.parent if parent.name.casefold() == "userdata" else parent)
+    try:
+        root = Path(os.path.commonpath(str(item) for item in roots))
+    except ValueError as exc:
+        raise UploadError("Choose INI files from one EverQuest folder.") from exc
+
+    listed: list[dict] = []
+    sources: dict[str, Path] = {}
+    eqclient = None
+    for file_path in resolved:
+        parent = file_path.parent
+        kind = "userdata" if parent.name.casefold() == "userdata" else "root"
+        if is_eqclient_ini(file_path.name):
+            if kind != "root" or eqclient is not None:
+                continue
+            eqclient = f"root/{file_path.name}"
+            sources[eqclient] = file_path
+            continue
+        parsed = parse_character_ini(file_path.name)
+        if parsed is None or parsed.server.lower() == "beta":
+            continue
+        source = f"{kind}/{file_path.name}"
+        if source in sources:
+            continue
+        sources[source] = file_path
+        listed.append(
+            {
+                "kind": kind,
+                "name": file_path.name,
+                "source": source,
+                "betaFilename": parsed.beta_filename,
+                "character": parsed.name,
+                "server": parsed.server,
+                "cls": parsed.cls,
+            }
+        )
+    if not listed:
+        raise UploadError("No character INI files found.")
+    listed.sort(
+        key=lambda item: (
+            item["character"].casefold(),
+            item["server"].casefold(),
+            item["kind"],
+            item["name"].casefold(),
+        )
+    )
+    _live_root = root
+    _live_sources = sources
+    app.logger.info("Listed %s selected character INI files in %s", len(listed), root.name)
+    return {"folder": str(root), "name": root.name, "files": listed, "eqclient": eqclient}
+
+
+def _choose_ini_files() -> list[str] | None:
     initial = r"D:\Everquest" if os.path.isdir(r"D:\Everquest") else ""
     code = """
 import sys
@@ -317,14 +386,14 @@ try:
     root.attributes("-topmost", True)
 except tk.TclError:
     pass
-path = filedialog.askdirectory(
-    title="Select the Live EverQuest folder",
-    mustexist=True,
+path = filedialog.askopenfilenames(
+    title="Select INI files",
     initialdir=initial or None,
+    filetypes=[("INI File", "*.ini")],
     parent=root,
 )
 root.destroy()
-sys.stdout.write(path)
+sys.stdout.write("\\n".join(path))
 """
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     try:
@@ -343,7 +412,7 @@ sys.stdout.write(path)
     if completed.returncode != 0:
         detail = (completed.stderr or "").strip() or "Could not open the folder dialog."
         raise UploadError(detail)
-    chosen = completed.stdout.strip("\r\n")
+    chosen = [line for line in completed.stdout.splitlines() if line.strip()]
     if not chosen:
         return None
     return chosen

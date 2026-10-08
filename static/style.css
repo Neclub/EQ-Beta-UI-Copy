@@ -47,7 +47,8 @@ body {
 }
 
 #app {
-  width: min(100% - 32px, calc(340px + 24rem + 12px));
+  width: calc(340px + 24rem + 12px);
+  min-width: calc(340px + 24rem + 12px);
   margin: 16px auto 20px;
   display: flex;
   flex-direction: column;
@@ -163,17 +164,18 @@ p {
 }
 
 .settings-column {
-  flex: 0 1 24rem;
-  width: min(24rem, 100%);
+  flex: 0 0 24rem;
+  width: 24rem;
+  min-width: 24rem;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-width: 0;
 }
 
 .panel-characters {
   flex: 0 0 340px;
   width: 340px;
+  min-width: 340px;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -652,37 +654,4 @@ p {
   font-family: Consolas, "Courier New", monospace;
   font-size: 12px;
   color: var(--text);
-}
-
-@media (max-width: 1080px) {
-  #app {
-    max-height: none;
-    overflow: auto;
-  }
-
-  .workspace {
-    flex-direction: column;
-    overflow: visible;
-  }
-
-  .controls {
-    width: 100%;
-    max-width: none;
-  }
-
-  .control-row {
-    flex-direction: column;
-  }
-
-  .panel-characters,
-  .settings-column {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: none;
-  }
-
-  .roster-shell {
-    flex: 0 1 auto;
-    max-height: 22rem;
-  }
 }

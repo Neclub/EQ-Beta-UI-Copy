@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EQ Beta UI Copy</title>
-  <link rel="stylesheet" href="/static/style.css?v=29">
+  <link rel="stylesheet" href="/static/style.css?v=30">
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true" id="class-icon-sprite">
@@ -117,7 +117,7 @@
             Open this page in Chrome or Edge. Folder browsing is not available in this browser.
           </p>
           <ol class="steps">
-            <li id="hosted-search" hidden>
+            <li id="hosted-search">
               Open your EverQuest folder. Paste this into the search box, press Ctrl+A, then Open.
               <p class="search-line">
                 <code id="ini-search">*antonius*.ini OR *bertox*.ini OR *bristle*.ini OR *cazic*.ini OR *drinal*.ini OR *erollisi*.ini OR *luclin*.ini OR *povar*.ini OR *prexus*.ini OR *quellious*.ini OR *rathe*.ini OR *tunare*.ini OR *vox*.ini OR *xegony*.ini OR eqclient.ini</code>
@@ -128,9 +128,9 @@
             <li>Choose Download zip. The file saves to your Downloads folder and includes readme.txt.</li>
           </ol>
           <p class="note" id="privacy">
-            On this computer, the character INI files you check are read to build the zip.
-            eqclient.ini is included when that folder has it. They are not saved.
-            Other EverQuest files are left alone.
+            Checked character INI files are uploaded so the server can rename them, then discarded.
+            eqclient.ini is included when you select it. They are not saved.
+            The first visit after the site has been idle can take about a minute while it wakes up.
           </p>
           <pre id="log" aria-live="polite"></pre>
         </div>
@@ -150,6 +150,6 @@
   </div>
 </div>
 <script src="/static/class_visuals.js?v=10"></script>
-  <script src="/static/app.js?v=19"></script>
+  <script src="/static/app.js?v=21"></script>
 </body>
 </html>

@@ -549,7 +549,7 @@ async function readJson(response) {
 }
 
 async function pickOnThisComputer() {
-  setStatus("Select the Live EverQuest folder in the dialog.");
+  setStatus("Open your EverQuest folder, paste the search, press Ctrl+A, then Open.");
   const response = await fetch("/pick-folder", { method: "POST", cache: "no-store" });
   const body = await readJson(response);
   if (!response.ok) throw new Error(body.error || "Could not read that folder.");
@@ -648,33 +648,32 @@ async function loadMode() {
     if (privacy) {
       privacy.textContent = "Checked character INI files are uploaded so the server can rename them, then discarded. eqclient.ini is included when you select it. They are not saved. The first visit after the site has been idle can take about a minute while it wakes up.";
     }
-    const searchHelp = document.querySelector("#hosted-search");
-    if (searchHelp) searchHelp.hidden = false;
-    const copySearch = document.querySelector("#copy-search");
-    const iniSearch = document.querySelector("#ini-search");
-    if (copySearch && iniSearch) {
-      copySearch.addEventListener("click", async () => {
-        const text = iniSearch.textContent;
-        try {
-          await navigator.clipboard.writeText(text);
-        } catch (_error) {
-          const range = document.createRange();
-          range.selectNodeContents(iniSearch);
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
-        copySearch.textContent = "Copied";
-        setTimeout(() => {
-          copySearch.textContent = "Copy";
-        }, 1500);
-      });
-    }
   }
   refreshActions();
 }
 
 window.EQCopy = { parseCharacterIni };
+
+const copySearch = document.querySelector("#copy-search");
+const iniSearch = document.querySelector("#ini-search");
+if (copySearch && iniSearch) {
+  copySearch.addEventListener("click", async () => {
+    const text = iniSearch.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_error) {
+      const range = document.createRange();
+      range.selectNodeContents(iniSearch);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    copySearch.textContent = "Copied";
+    setTimeout(() => {
+      copySearch.textContent = "Copy";
+    }, 1500);
+  });
+}
 
 const helpButton = document.querySelector("#help-button");
 const helpMenu = document.querySelector("#help-menu");

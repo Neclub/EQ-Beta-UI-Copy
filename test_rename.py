@@ -285,6 +285,33 @@ class LocalFolderTests(unittest.TestCase):
         self.assertEqual(listed["files"][0]["betaFilename"], "UI_Bob_beta_WAR.ini")
         self.assertEqual(listed["eqclient"], "root/eqclient.ini")
 
+    def test_selected_files_keep_character_inis_and_one_eqclient(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "UI_Bob_Vox_WAR.ini").write_bytes(b"[UI]")
+            (root / "eqclient.ini").write_bytes(b"[Client]")
+            (root / "eqclient-Neclub (bristle).ini").write_bytes(b"[Named]")
+            (root / "userdata").mkdir()
+            (root / "userdata" / "AT_default_Bob_Vox_WAR.ini").write_bytes(b"[Audio]")
+            listed = webapp.remember_selected_files(
+                [
+                    root / "UI_Bob_Vox_WAR.ini",
+                    root / "eqclient.ini",
+                    root / "eqclient-Neclub (bristle).ini",
+                    root / "userdata" / "AT_default_Bob_Vox_WAR.ini",
+                ]
+            )
+
+        sources = [item["source"] for item in listed["files"]]
+        self.assertEqual(
+            sources,
+            [
+                "root/UI_Bob_Vox_WAR.ini",
+                "userdata/AT_default_Bob_Vox_WAR.ini",
+            ],
+        )
+        self.assertEqual(listed["eqclient"], "root/eqclient.ini")
+
     def test_local_zip_reads_only_the_selected_character_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
